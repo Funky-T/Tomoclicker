@@ -1,0 +1,5 @@
+0,0,modified
+193,831,pause button
+0,0,modified
+2710,1256,write
+3976,569,allo
