@@ -1,29 +1,28 @@
 import pyautogui
 import ctypes
 import time 
-import os
+
 import threading
 from tkinter import *
 from PIL import *
-
+from os import path
 
 #https://www.mirametrics.com/help/mira_pro_script_8/source/getkeystate.htm 
 
 #GLOBAL VARIABLE
 VERSION = "1.0"
 
-CURRENT_WORKING_DIRECTORY = os.getcwd()
-SAVE_FILE = "tomoclicker_save_file.txt"
-SAVE_FILE_PATH = CURRENT_WORKING_DIRECTORY + "\\" + SAVE_FILE
-LOGO_FILE_PATH = CURRENT_WORKING_DIRECTORY + "\\" + "TomoclickerLogo.png"
-LOGO_BUTTON_OFF_IMAGE = CURRENT_WORKING_DIRECTORY + "\\" + "tomoclickerlogobuttonoff.png"
-LOGO_BUTTON_ON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\" + "tomoclickerlogobuttonon.png"
-SAVE_BUTTON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\" + "save_image.png"
-LOAD_BUTTON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\" + "load_image.png"
-HOME_BUTTON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\" + "home_button.png"
-EXIT_BUTTON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\" + "exit_button.png"
-FREE_AIM_BUTTON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\" + "free_aim_button.png"
-AIM_LOCK_BUTTON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\" + "aim_lock_button.png"
+CURRENT_WORKING_DIRECTORY = path.dirname(__file__)
+SAVE_FILE_PATH = CURRENT_WORKING_DIRECTORY + "\\resources\\" + "tomoclicker_save_file.txt"
+LOGO_FILE_PATH = CURRENT_WORKING_DIRECTORY + "\\resources\\" + "TomoclickerLogo.png"
+LOGO_BUTTON_OFF_IMAGE = CURRENT_WORKING_DIRECTORY + "\\resources\\" + "tomoclickerlogobuttonoff.png"
+LOGO_BUTTON_ON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\resources\\" + "tomoclickerlogobuttonon.png"
+SAVE_BUTTON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\resources\\" + "save_image.png"
+LOAD_BUTTON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\resources\\" + "load_image.png"
+HOME_BUTTON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\resources\\" + "home_button.png"
+EXIT_BUTTON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\resources\\" + "exit_button.png"
+FREE_AIM_BUTTON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\resources\\" + "free_aim_button.png"
+AIM_LOCK_BUTTON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\resources\\" + "aim_lock_button.png"
 
 MENU_TOGGLE_ON = False
 ACTIVE_PROCESS_ON = False
