@@ -23,6 +23,8 @@ HOME_BUTTON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\resources\\" + "home_button.p
 EXIT_BUTTON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\resources\\" + "exit_button.png"
 FREE_AIM_BUTTON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\resources\\" + "free_aim_button.png"
 AIM_LOCK_BUTTON_IMAGE = CURRENT_WORKING_DIRECTORY + "\\resources\\" + "aim_lock_button.png"
+SAVE_BUTTON_IMAGE_TWO = CURRENT_WORKING_DIRECTORY + "\\resources\\" + "save_button.png"
+
 
 MENU_TOGGLE_ON = False
 ACTIVE_PROCESS_ON = False
@@ -58,7 +60,6 @@ FRAME_DICTIONARY = {
 CURRENT_FRAME = HOME_FRAME
 
 #FUNCTIONS
-
 def accurate_click(x, y):
     pyautogui.move(x, y)
 
@@ -167,14 +168,41 @@ def start_auto_click_aim_mode_thread():
 
 #SAVE COORDINATE BASED ON WHERE YOU CLICK ON THE SCREEN
 def save_new_coordinate():
+    global ACTIVE_PROCESS_ON
+    ACTIVE_PROCESS_ON = True
     coordinates_tuple = get_mouse_placement_on_click()
     if coordinates_tuple[0] != -1 and coordinates_tuple[1] != -1:
-        save_name = input('Please enter the name for this save file:\n')
-        with open(SAVE_FILE_PATH, "a") as myfile:
+        #pop up window if valid save:
+        save_popup_root = Tk(className= "Input save name")
+
+        #sets background color
+        save_popup_root.configure(bg=BACKGROUND_CLR)
+
+        #sets window size
+        save_popup_root.geometry("640x50")
+        save_popup_root.minsize(640, 50)
+        save_popup_root.maxsize(640, 50)
+
+        save_text_entry_box = Entry(save_popup_root, bd=5, width=50)
+        save_text_entry_box.place(x=5,y=10) 
+        Button(save_popup_root, text="save", width=10, command=lambda: perform_save(coordinates_tuple, save_text_entry_box.get(), save_popup_root)).place(x=437, y=10)
+        Button(save_popup_root, text="cancel", width=10, command=save_popup_root.destroy).place(x=537, y=10)
+         
+        save_popup_root.mainloop()
+
+        
+    #USER PRESSED ESC:
+    ACTIVE_PROCESS_ON = False
+
+def perform_save(coordinates_tuple, save_name, pop_up_window):
+    with open(SAVE_FILE_PATH, "a") as myfile:
             myfile.write(str(coordinates_tuple[0]) + "," + str(coordinates_tuple[1]) + "," + save_name + "\n")
             SAVE_LIST.append([coordinates_tuple[0], coordinates_tuple[1], save_name])
-    #USER PRESSED ESC:
-    print("Coordination Save Cancelled\n")
+    pop_up_window.destroy()
+
+def start_save_thread():
+    if (not ACTIVE_PROCESS_ON):
+        threading.Thread(target=save_new_coordinate, daemon=True).start()  #ADD TARGET
 
 def load_coordinate_by_index_file(index):
     temp_index = 0
@@ -344,48 +372,48 @@ click_button_image = PhotoImage(file=LOGO_FILE_PATH).subsample(4,4)
 exit_button_image = PhotoImage(file=EXIT_BUTTON_IMAGE).subsample(4,4)
 
 Button(HOME_FRAME_MENU_ON, height=80, width=80, image=home_button_image, bg="#27739f", activebackground="#27739f", relief=SUNKEN, command=draw_home).place(x=5, y=110)
-Label(HOME_FRAME_MENU_ON, text="HOME", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=113)
+Label(HOME_FRAME_MENU_ON, text="HOME", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=133)
 Button(HOME_FRAME_MENU_ON, height=80, width=80, image=save_button_image, bg="#27738e", activebackground="#27739f", relief=FLAT, command=draw_save).place(x=5, y=210)
-Label(HOME_FRAME_MENU_ON, text="SAVE", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=213)
+Label(HOME_FRAME_MENU_ON, text="SAVE", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=233)
 Button(HOME_FRAME_MENU_ON, height=80, width=80, image=load_button_image, bg="#27738e", activebackground="#27739f", relief=FLAT, command=draw_load).place(x=5, y=310)
-Label(HOME_FRAME_MENU_ON, text="LOAD", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=313)
+Label(HOME_FRAME_MENU_ON, text="LOAD", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=333)
 Button(HOME_FRAME_MENU_ON, height=80, width=80, image=click_button_image, bg="#27738e", activebackground="#27739f", relief=FLAT, command=draw_autoclick).place(x=5, y=410)
-Label(HOME_FRAME_MENU_ON, text="AUTOCLICK", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=10).place(x = 130, y=413)
+Label(HOME_FRAME_MENU_ON, text="AUTOCLICK", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=10).place(x = 130, y=433)
 Button(HOME_FRAME_MENU_ON, height=80, width=80, image=exit_button_image, bg="#27738e", activebackground="#27739f", relief=FLAT, command=ROOT.destroy).place(x=5, y=600)
-Label(HOME_FRAME_MENU_ON, text="EXIT", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=603)
+Label(HOME_FRAME_MENU_ON, text="EXIT", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=623)
 
 Button(SAVE_FRAME_MENU_ON, height=80, width=80, image=home_button_image, bg="#27738e", activebackground="#27739f", relief=FLAT, command=draw_home).place(x=5, y=110)
-Label(SAVE_FRAME_MENU_ON, text="HOME", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=113)
+Label(SAVE_FRAME_MENU_ON, text="HOME", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=133)
 Button(SAVE_FRAME_MENU_ON, height=80, width=80, image=save_button_image, bg="#27739f", activebackground="#27739f", relief=SUNKEN, command=draw_save).place(x=5, y=210)
-Label(SAVE_FRAME_MENU_ON, text="SAVE", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=213)
+Label(SAVE_FRAME_MENU_ON, text="SAVE", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=233)
 Button(SAVE_FRAME_MENU_ON, height=80, width=80, image=load_button_image, bg="#27738e", activebackground="#27739f", relief=FLAT, command=draw_load).place(x=5, y=310)
-Label(SAVE_FRAME_MENU_ON, text="LOAD", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=313)
+Label(SAVE_FRAME_MENU_ON, text="LOAD", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=333)
 Button(SAVE_FRAME_MENU_ON, height=80, width=80, image=click_button_image, bg="#27738e", activebackground="#27739f", relief=FLAT, command=draw_autoclick).place(x=5, y=410)
-Label(SAVE_FRAME_MENU_ON, text="AUTOCLICK", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=10).place(x = 130, y=413)
+Label(SAVE_FRAME_MENU_ON, text="AUTOCLICK", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=10).place(x = 130, y=433)
 Button(SAVE_FRAME_MENU_ON, height=80, width=80, image=exit_button_image, bg="#27738e", activebackground="#27739f", relief=FLAT, command=ROOT.destroy).place(x=5, y=600)
-Label(SAVE_FRAME_MENU_ON, text="EXIT", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=603)
+Label(SAVE_FRAME_MENU_ON, text="EXIT", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=623)
 
 Button(LOAD_FRAME_MENU_ON, height=80, width=80, image=home_button_image, bg="#27738e", activebackground="#27739f", relief=FLAT, command=draw_home).place(x=5, y=110)
-Label(LOAD_FRAME_MENU_ON, text="HOME", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=113)
+Label(LOAD_FRAME_MENU_ON, text="HOME", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=133)
 Button(LOAD_FRAME_MENU_ON, height=80, width=80, image=save_button_image, bg="#27738e", activebackground="#27739f", relief=FLAT, command=draw_save).place(x=5, y=210)
-Label(LOAD_FRAME_MENU_ON, text="SAVE", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=213)
+Label(LOAD_FRAME_MENU_ON, text="SAVE", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=233)
 Button(LOAD_FRAME_MENU_ON, height=80, width=80, image=load_button_image, bg="#27739f", activebackground="#27739f", relief=SUNKEN, command=draw_load).place(x=5, y=310)
-Label(LOAD_FRAME_MENU_ON, text="LOAD", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=313)
+Label(LOAD_FRAME_MENU_ON, text="LOAD", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=333)
 Button(LOAD_FRAME_MENU_ON, height=80, width=80, image=click_button_image, bg="#27738e", activebackground="#27739f", relief=FLAT, command=draw_autoclick).place(x=5, y=410)
-Label(LOAD_FRAME_MENU_ON, text="AUTOCLICK", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=10).place(x = 130, y=413)
+Label(LOAD_FRAME_MENU_ON, text="AUTOCLICK", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=10).place(x = 130, y=433)
 Button(LOAD_FRAME_MENU_ON, height=80, width=80, image=exit_button_image, bg="#27738e", activebackground="#27739f", relief=FLAT, command=ROOT.destroy).place(x=5, y=600)
-Label(LOAD_FRAME_MENU_ON, text="EXIT", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=603)
+Label(LOAD_FRAME_MENU_ON, text="EXIT", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=623)
 
 Button(AUTOCLICK_FRAME_MENU_ON, height=80, width=80, image=home_button_image, bg="#27738e", activebackground="#27739f", relief=FLAT, command=draw_home).place(x=5, y=110)
-Label(AUTOCLICK_FRAME_MENU_ON, text="HOME", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=113)
+Label(AUTOCLICK_FRAME_MENU_ON, text="HOME", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=133)
 Button(AUTOCLICK_FRAME_MENU_ON, height=80, width=80, image=save_button_image, bg="#27738e", activebackground="#27739f", relief=FLAT, command=draw_save).place(x=5, y=210)
-Label(AUTOCLICK_FRAME_MENU_ON, text="SAVE", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=213)
+Label(AUTOCLICK_FRAME_MENU_ON, text="SAVE", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=233)
 Button(AUTOCLICK_FRAME_MENU_ON, height=80, width=80, image=load_button_image, bg="#27738e", activebackground="#27739f", relief=FLAT, command=draw_load).place(x=5, y=310)
-Label(AUTOCLICK_FRAME_MENU_ON, text="LOAD", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=313)
+Label(AUTOCLICK_FRAME_MENU_ON, text="LOAD", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=333)
 Button(AUTOCLICK_FRAME_MENU_ON, height=80, width=80, image=click_button_image, bg="#27739f", activebackground="#27739f", relief=SUNKEN, command=draw_autoclick).place(x=5, y=410)
-Label(AUTOCLICK_FRAME_MENU_ON, text="AUTOCLICK", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=10).place(x = 130, y=413)
+Label(AUTOCLICK_FRAME_MENU_ON, text="AUTOCLICK", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=10).place(x = 130, y=433)
 Button(AUTOCLICK_FRAME_MENU_ON, height=80, width=80, image=exit_button_image, bg="#27738e", activebackground="#27739f", relief=FLAT, command=ROOT.destroy).place(x=5, y=600)
-Label(AUTOCLICK_FRAME_MENU_ON, text="EXIT", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=603)
+Label(AUTOCLICK_FRAME_MENU_ON, text="EXIT", anchor="w", font=("GillSans", 20), fg="white", bg="#27738e", height=1, width=5).place(x = 130, y=623)
 
 
 #sets window icon
@@ -534,7 +562,21 @@ Label(AUTOCLICK_FRAME_MENU_ON, text="at the saved coordinate. Press \"esc\" key 
 Button(AUTOCLICK_FRAME_MENU_ON, height=80, width=180, image=aim_lock_button_image, bg=BACKGROUND_CLR, activebackground=BACKGROUND_CLR, relief=FLAT, command=start_auto_click_aim_mode_thread).place(x=730, y=580)
 
 #SAVE
+save_button = PhotoImage(file=SAVE_BUTTON_IMAGE_TWO).subsample(2,2)
+Label(SAVE_FRAME, text="SAVE", font=("Helvetica", 25), anchor='nw', fg="white", bg=BACKGROUND_CLR, height=1, width=5).place(x=10, y=110)
+Label(SAVE_FRAME, text="Instructions:", font=("Helvetica", 20), anchor='nw', fg="white", bg=BACKGROUND_CLR, height=1, width=12).place(x=60, y=180)
+Label(SAVE_FRAME, text="Press the save button to start saving process, afterwards position the cursor ", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=60).place(x=100, y=230)
+Label(SAVE_FRAME, text="wherever you would like to save. When ready, left click at the target coordinate", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=60).place(x=100, y=260)
+Label(SAVE_FRAME, text="to store it. You will also be prompted to input a save name.", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=60).place(x=100, y=290)
+Button(SAVE_FRAME, height=80, width=180, image=save_button, bg=BACKGROUND_CLR, activebackground=BACKGROUND_CLR, relief=FLAT, command=start_save_thread).place(x=530, y=400)
 
+Label(SAVE_FRAME_MENU_ON, text="SAVE", font=("Helvetica", 25), anchor='nw', fg="white", bg=BACKGROUND_CLR, height=1, width=5).place(x=420, y=110)
+Label(SAVE_FRAME_MENU_ON, text="Instructions:", font=("Helvetica", 20), anchor='nw', fg="white", bg=BACKGROUND_CLR, height=1, width=12).place(x=450, y=180)
+Label(SAVE_FRAME_MENU_ON, text="Press the save button to start saving process, afterwards position", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=60).place(x=490, y=230)
+Label(SAVE_FRAME_MENU_ON, text="the cursor wherever you would like to save. ", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=60).place(x=490, y=260)
+Label(SAVE_FRAME_MENU_ON, text="When ready, left click at the target coordinate to store it.", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=60).place(x=490, y=290)
+Label(SAVE_FRAME_MENU_ON, text="You will also be prompted to input a save name.", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=60).place(x=490, y=320)
+Button(SAVE_FRAME_MENU_ON, height=80, width=180, image=save_button, bg=BACKGROUND_CLR, activebackground=BACKGROUND_CLR, relief=FLAT, command=start_save_thread).place(x=740, y=400)
 
 
 #draws footer
