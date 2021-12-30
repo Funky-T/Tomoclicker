@@ -18,12 +18,6 @@ SAVE_FILE_PATH = CURRENT_WORKING_DIRECTORY + "\\resources\\" + "tomoclicker_save
 MENU_TOGGLE_ON = False
 ACTIVE_PROCESS_ON = False
 
-CURRENT_LOADED_X = -1
-CURRENT_LOADED_Y = -1
-CURRENT_LOADED_NAME = "No Coordinates Loaded"
-INDEX = -1
-SAVE_LIST = []
-
 BACKGROUND_CLR = "#281B30"
 DEFAULT_SCREEN_SIZE = "1280x720"
 DEFAULT_WIDTH = 1280
@@ -37,6 +31,13 @@ BODY_FRAME = None
 MINI_BODY_FRAME = None
 FOOTER_FRAME = None
 CURRENT_FRAME_NAME = "N/A"
+
+CURRENT_LOADED_X = -1
+CURRENT_LOADED_Y = -1
+CURRENT_LOADED_NAME = StringVar(ROOT)
+CURRENT_LOADED_NAME.set("No Coordinates Loaded")
+INDEX = -1
+SAVE_LIST = []
 
 LOGO_IMAGE = PhotoImage(file=CURRENT_WORKING_DIRECTORY + "\\resources\\" + "TomoclickerLogo.png")
 LOGO_BUTTON_IMAGE = PhotoImage(file=CURRENT_WORKING_DIRECTORY + "\\resources\\" + "tomoclickerlogobuttonoff.png").subsample(4,4)
@@ -133,24 +134,39 @@ def auto_click_set_position(clicks_per_second):
     global ACTIVE_PROCESS_ON
     ACTIVE_PROCESS_ON = True
     if (INDEX != -1):
-        time.sleep(2)
+        bnum = 0x01
+
         while 1:
-            pyautogui.click(clicks=clicks_per_second, x=CURRENT_LOADED_X, y=CURRENT_LOADED_Y)
-            if ctypes.windll.user32.GetKeyState(0x1B) not in [0, 1]:
-                break
-    ACTIVE_PROCESS_ON = False
+            if ctypes.windll.user32.GetKeyState(bnum) not in [0, 1]:
+                # ^ this returns either 0 or 1 when button is not being held down
+                while ctypes.windll.user32.GetKeyState(bnum) not in [0, 1]:
+                    #while button is being held down
+                    continue
+                while 1:
+                    pyautogui.click(clicks=clicks_per_second, x=CURRENT_LOADED_X, y=CURRENT_LOADED_Y)
+                    if ctypes.windll.user32.GetKeyState(0x1B) not in [0, 1]:
+                        ACTIVE_PROCESS_ON = False
+                        return 
+    
 
 #NOTE:MUST GIVE FEEDBACK IF POSITION IS NOT VALID
 def auto_click_set_position_default():
     global ACTIVE_PROCESS_ON
     ACTIVE_PROCESS_ON = True
     if (INDEX != -1):
-        time.sleep(2)
+        bnum = 0x01
+
         while 1:
-            pyautogui.click(clicks=30, x=CURRENT_LOADED_X, y=CURRENT_LOADED_Y)
-            if ctypes.windll.user32.GetKeyState(0x1B) not in [0, 1]:
-                break
-    ACTIVE_PROCESS_ON = False
+            if ctypes.windll.user32.GetKeyState(bnum) not in [0, 1]:
+                # ^ this returns either 0 or 1 when button is not being held down
+                while ctypes.windll.user32.GetKeyState(bnum) not in [0, 1]:
+                    #while button is being held down
+                    while 1:
+                        pyautogui.click(clicks=30, x=int(CURRENT_LOADED_X), y=int(CURRENT_LOADED_Y))
+                        if ctypes.windll.user32.GetKeyState(0x1B) not in [0, 1]:
+                            ACTIVE_PROCESS_ON = False
+                            return
+    
 
 def start_auto_click_aim_mode_thread():
     if (not ACTIVE_PROCESS_ON):
@@ -205,7 +221,7 @@ def load_coordinate_by_index_file(index):
             global CURRENT_LOADED_X, CURRENT_LOADED_Y, CURRENT_LOADED_NAME, INDEX
             CURRENT_LOADED_X = x_y_name[0]
             CURRENT_LOADED_Y = x_y_name[1]
-            CURRENT_LOADED_NAME = x_y_name[2]
+            CURRENT_LOADED_NAME.set(x_y_name[2])
             INDEX = temp_index
 
         except:
@@ -228,10 +244,10 @@ def load_coordinate_by_name(save_name):
                 global CURRENT_LOADED_X, CURRENT_LOADED_Y, CURRENT_LOADED_NAME, INDEX
                 CURRENT_LOADED_X = x_y_name[0]
                 CURRENT_LOADED_Y = x_y_name[1]
-                CURRENT_LOADED_NAME = x_y_name[2]
+                CURRENT_LOADED_NAME.set(x_y_name[2])
                 INDEX = temp_index
 
-                break
+                return 0
             temp_index += 1
         #CASE: FILE NOT FOUND GIVE FEEDBACK
         print("SAVE NOT FOUND")
@@ -244,6 +260,37 @@ def load_save_list():
             save_list.append(x_y_name)
     return save_list
     
+def build_load_save_list():
+    load_save_list = ["No Coordinates Loaded:                    (-1,-1)"]
+    for save in SAVE_LIST:
+        load_save_list.append(format_save_name(save))
+
+    return load_save_list
+
+def format_save_name(save):
+    formatted_save_name = save[2] + ":"
+    coordinate = "(" + str(save[0]) + "," + str(save[1]) + ")"
+    spaces_to_add = 40 - len(formatted_save_name) - len(coordinate)
+
+    while (spaces_to_add > 1):
+        formatted_save_name += "  "
+        spaces_to_add = spaces_to_add - 1
+
+    formatted_save_name += coordinate
+
+    return formatted_save_name
+
+def update_current_loaded_save(*args):
+    save_name = CURRENT_LOADED_NAME.get().split(":")[0]
+
+    if (save_name != "No Coordinates Loaded"):
+        load_coordinate_by_name(save_name)
+
+    else:
+        reset_loaded_coordinates()
+        
+    FOOTER_FRAME = draw_footer_frame()
+    FOOTER_FRAME.place(x=0, y=DEFAULT_HEIGHT-31, anchor='nw')
 
 def update_saved_coordinate(index, new_x, new_y, new_name):
     new_save = [new_x, new_y, new_name + "\n"]
@@ -273,7 +320,7 @@ def reset_loaded_coordinates():
     global CURRENT_LOADED_X, CURRENT_LOADED_Y, CURRENT_LOADED_NAME, INDEX
     CURRENT_LOADED_X = -1
     CURRENT_LOADED_Y = -1
-    CURRENT_LOADED_NAME = "No Coordinates Loaded"
+    CURRENT_LOADED_NAME.set("No Coordinates Loaded")
     INDEX = -1 
 
 def draw_menu():
@@ -384,7 +431,16 @@ def draw_save_page():
 def draw_load_page():
     load_frame = Frame(ROOT, bg=BACKGROUND_CLR, width=DEFAULT_WIDTH, height=588)
 
-    #draws body TODO
+    #draws body
+    Label(load_frame, text="LOAD SAVE", font=("Helvetica", 25), anchor='nw', fg="white", bg=BACKGROUND_CLR, height=1, width=10).place(x=10, y=9)
+    Label(load_frame, text="Loading Coordinates:", font=("Helvetica", 20), anchor='nw', fg="white", bg=BACKGROUND_CLR, height=1, width=25).place(x=60, y=79)
+    Label(load_frame, text="Select a save from the drop down menu if you have one ", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=60).place(x=100, y=129)
+    Label(load_frame, text="or more coordinates saved.", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=60).place(x=100, y=159)
+
+    load_page_save_list = build_load_save_list()
+    list_of_saves = OptionMenu(load_frame, CURRENT_LOADED_NAME, *load_page_save_list)
+    list_of_saves.place(x=805, y=143)
+
 
     return load_frame
 
@@ -439,7 +495,15 @@ def draw_save_page_menu():
 def draw_load_page_menu():
     load_frame_menu_on = Frame(ROOT, bg=BACKGROUND_CLR, width=DEFAULT_WIDTH - 405, height=579)
 
-    #draws body TODO
+    #draws body
+    Label(load_frame_menu_on, text="LOAD SAVE", font=("Helvetica", 25), anchor='nw', fg="white", bg=BACKGROUND_CLR, height=1, width=10).place(x=15, y=0)
+    Label(load_frame_menu_on, text="Loading Coordinates:", font=("Helvetica", 20), anchor='nw', fg="white", bg=BACKGROUND_CLR, height=1, width=25).place(x=45, y=70)
+    Label(load_frame_menu_on, text="Select a save from the drop down menu if you have one ", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=60).place(x=85, y=120)
+    Label(load_frame_menu_on, text="or more coordinates saved.", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=60).place(x=85, y=150)
+
+    load_save_list = build_load_save_list()
+    list_of_saves = OptionMenu(load_frame_menu_on, CURRENT_LOADED_NAME, *load_save_list)
+    list_of_saves.place(x=355, y=250)
 
     return load_frame_menu_on
 
@@ -486,7 +550,7 @@ def draw_footer_frame():
     Label(footer_frame, text="", bg="#624285", height=10, width=230).place(x=0, y=1)
     Label(footer_frame, text="X: " + str(CURRENT_LOADED_X), anchor='nw', font=("AvenirNext", 15), fg="white", bg="#624285", height=1, width=20).place(x = 10, y=1)
     Label(footer_frame, text="Y: " + str(CURRENT_LOADED_Y), anchor='nw', font=("AvenirNext", 15), fg="white", bg="#624285", height=1, width=20).place(x = 300, y=1)
-    Label(footer_frame, text="Save Name: " + CURRENT_LOADED_NAME, anchor='nw', font=("AvenirNext", 15), fg="white", bg="#624285", height=1, width=200).place(x = 600, y=1)
+    Label(footer_frame, text="Save Name: " + CURRENT_LOADED_NAME.get(), anchor='nw', font=("AvenirNext", 15), fg="white", bg="#624285", height=1, width=200).place(x = 600, y=1)
 
     return footer_frame
 
@@ -550,5 +614,6 @@ FOOTER_FRAME.place(x=0, y=DEFAULT_HEIGHT-31, anchor='nw')
 #sets the home as the current frame
 CURRENT_FRAME = BODY_FRAME
 CURRENT_FRAME_NAME = "home"
+CURRENT_LOADED_NAME.trace("w", update_current_loaded_save)
 
 ROOT.mainloop()
