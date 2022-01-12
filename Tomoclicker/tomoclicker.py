@@ -5,7 +5,7 @@ import time
 import threading
 from tkinter import *
 from PIL import *
-from os import path
+from os import name, path
 
 #https://www.mirametrics.com/help/mira_pro_script_8/source/getkeystate.htm 
 
@@ -47,6 +47,7 @@ AIM_LOCK_BUTTON = PhotoImage(file=CURRENT_WORKING_DIRECTORY + "\\resources\\" + 
 HOME_BUTTON = PhotoImage(file=CURRENT_WORKING_DIRECTORY + "\\resources\\" + "home_button.png").subsample(4,4)
 SAVE_BUTTON = PhotoImage(file=CURRENT_WORKING_DIRECTORY + "\\resources\\" + "save_image.png").subsample(4,4)
 LOAD_BUTTON = PhotoImage(file=CURRENT_WORKING_DIRECTORY + "\\resources\\" + "load_image.png").subsample(4,4)
+DELETE_BUTTON = PhotoImage(file=CURRENT_WORKING_DIRECTORY + "\\resources\\" + "delete_button.png").subsample(4,4)
 AUTOCLICK_BUTTON = PhotoImage(file=CURRENT_WORKING_DIRECTORY + "\\resources\\" + "TomoclickerLogo.png").subsample(4,4)
 EXIT_BUTTON = PhotoImage(file=CURRENT_WORKING_DIRECTORY + "\\resources\\" + "exit_button.png").subsample(4,4)
 
@@ -195,20 +196,21 @@ def save_new_coordinate():
         Button(save_popup_root, text="cancel", width=10, command=save_popup_root.destroy).place(x=537, y=10)
          
         save_popup_root.mainloop()
-
-        
-    #USER PRESSED ESC:
+ 
+    #USER PRESSED ESC OR SAVE IS DONE:
     ACTIVE_PROCESS_ON = False
 
 def perform_save(coordinates_tuple, save_name, pop_up_window):
-    with open(SAVE_FILE_PATH, "a") as myfile:
-            myfile.write(str(coordinates_tuple[0]) + "," + str(coordinates_tuple[1]) + "," + save_name + "\n")
-            SAVE_LIST.append([coordinates_tuple[0], coordinates_tuple[1], save_name])
-    pop_up_window.destroy()
+    if (len(save_name) <= 30):
+        if (not is_save_name_in_save_list(save_name)):
+            with open(SAVE_FILE_PATH, "a") as myfile:
+                    myfile.write(str(coordinates_tuple[0]) + "," + str(coordinates_tuple[1]) + "," + save_name + "\n")
+                    SAVE_LIST.append([coordinates_tuple[0], coordinates_tuple[1], save_name])
+            pop_up_window.destroy()
 
 def start_save_thread():
     if (not ACTIVE_PROCESS_ON):
-        threading.Thread(target=save_new_coordinate, daemon=True).start()  #ADD TARGET
+        threading.Thread(target=save_new_coordinate, daemon=True).start() 
 
 def load_coordinate_by_index_file(index):
     temp_index = 0
@@ -252,6 +254,12 @@ def load_coordinate_by_name(save_name):
         #CASE: FILE NOT FOUND GIVE FEEDBACK
         print("SAVE NOT FOUND")
 
+def is_save_name_in_save_list(save_name):
+    for save in SAVE_LIST:
+        if (save[2] == save_name):
+            return True
+    return False        
+
 def load_save_list():
     save_list = []
     with open(SAVE_FILE_PATH, "r+") as myfile:
@@ -260,8 +268,14 @@ def load_save_list():
             save_list.append(x_y_name)
     return save_list
     
-def build_load_save_list():
-    load_save_list = ["No Coordinates Loaded:                    (-1,-1)"]
+def build_save_list(load):
+    load_save_list = []
+
+    if (load):
+        load_save_list.append("No Coordinates Loaded:                    (-1,-1)")
+    else:
+        load_save_list.append("No save selected")
+
     for save in SAVE_LIST:
         load_save_list.append(format_save_name(save))
 
@@ -305,10 +319,51 @@ def save_list_to_file():
         for save in SAVE_LIST:
             myfile.write(str(save[0]) + "," + str(save[1]) + "," + save[2])
 
+def delete_coordinate_by_name(name_to_be_deleted, root):
+    index=0
+    for save in SAVE_LIST:
+        if (save[2] + ":" == name_to_be_deleted):
+            delete_coordinate_by_index(index)
+            root.destroy()
+            break
+        index += index
+    
 
-def delete_coordinate(index_to_be_deleted):
+def delete_coordinate_by_index(index_to_be_deleted):
     SAVE_LIST.remove(SAVE_LIST[index_to_be_deleted])
     save_list_to_file()
+
+def delete_coordinate(name_to_be_deleted):
+    global ACTIVE_PROCESS_ON
+    ACTIVE_PROCESS_ON = True
+
+    #clean save_name
+    name_to_be_deleted = name_to_be_deleted.split(" ")[0]
+
+    #pop up window if valid save:
+    delete_popup_root = Tk(className= "Confirm Delete")
+
+    #sets background color
+    delete_popup_root.configure(bg=BACKGROUND_CLR)
+
+    #sets window size
+    delete_popup_root.geometry("640x50")
+    delete_popup_root.minsize(640, 50)
+    delete_popup_root.maxsize(640, 50)
+
+    Button(delete_popup_root, text="Delete", width=10, command=lambda: delete_coordinate_by_name(name_to_be_deleted, delete_popup_root)).place(x=437, y=10)
+    Button(delete_popup_root, text="cancel", width=10, command=delete_popup_root.destroy).place(x=537, y=10)
+         
+    delete_popup_root.mainloop()
+ 
+    #USER PRESSED ESC OR SAVE IS DONE:
+    ACTIVE_PROCESS_ON = False
+    
+
+
+def start_delete_save_thread(name_to_be_deleted):
+    if (not ACTIVE_PROCESS_ON):
+        threading.Thread(target=lambda: delete_coordinate(name_to_be_deleted), daemon=True).start() 
 
 
 def toggle_draw_menu():
@@ -431,16 +486,26 @@ def draw_save_page():
 def draw_load_page():
     load_frame = Frame(ROOT, bg=BACKGROUND_CLR, width=DEFAULT_WIDTH, height=588)
 
+    #body resources
+    save_to_be_deleted = StringVar(ROOT, value="Select Save to Delete")
+    load_save_list = build_save_list(load=True)
+    delete_save_list = build_save_list(load=False)
+    list_of_saves_to_load = OptionMenu(load_frame, CURRENT_LOADED_NAME, *load_save_list)
+    list_of_saves_to_delete = OptionMenu(load_frame, save_to_be_deleted, *delete_save_list)
+
     #draws body
     Label(load_frame, text="LOAD SAVE", font=("Helvetica", 25), anchor='nw', fg="white", bg=BACKGROUND_CLR, height=1, width=10).place(x=10, y=9)
     Label(load_frame, text="Loading Coordinates:", font=("Helvetica", 20), anchor='nw', fg="white", bg=BACKGROUND_CLR, height=1, width=25).place(x=60, y=79)
-    Label(load_frame, text="Select a save from the drop down menu if you have one ", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=60).place(x=100, y=129)
-    Label(load_frame, text="or more coordinates saved.", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=60).place(x=100, y=159)
+    Label(load_frame, text="Select a save from the drop down menu if you have one ", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=45).place(x=100, y=129)
+    Label(load_frame, text="or more coordinates saved.", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=30).place(x=100, y=159)
 
-    load_page_save_list = build_load_save_list()
-    list_of_saves = OptionMenu(load_frame, CURRENT_LOADED_NAME, *load_page_save_list)
-    list_of_saves.place(x=805, y=143)
+    Label(load_frame, text="DELETE SAVE", font=("Helvetica", 25), anchor='nw', fg="white", bg=BACKGROUND_CLR, height=1, width=12).place(x=15, y=330)
+    Label(load_frame, text="Select the save you wish to delete from the drop down menu", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=45).place(x=85, y=400)
+    Label(load_frame, text="and hit the delete button", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=30).place(x=85, y=430)
+    Button(load_frame, height=40, width=80, image=DELETE_BUTTON, bg=BACKGROUND_CLR, activebackground=BACKGROUND_CLR, relief=FLAT, command=lambda: start_delete_save_thread(str(save_to_be_deleted.get()))).place(x=1140, y=405)
 
+    list_of_saves_to_load.place(x=805, y=143)
+    list_of_saves_to_delete.place(x=805, y=410)
 
     return load_frame
 
@@ -495,15 +560,26 @@ def draw_save_page_menu():
 def draw_load_page_menu():
     load_frame_menu_on = Frame(ROOT, bg=BACKGROUND_CLR, width=DEFAULT_WIDTH - 405, height=579)
 
+    #body resources
+    save_to_be_deleted = StringVar(ROOT, value="Select Save to Delete")
+    load_save_list = build_save_list(load=True)
+    delete_save_list = build_save_list(load=False)
+    list_of_saves_to_load = OptionMenu(load_frame_menu_on, CURRENT_LOADED_NAME, *load_save_list)
+    list_of_saves_to_delete = OptionMenu(load_frame_menu_on, save_to_be_deleted, *delete_save_list)
+
     #draws body
     Label(load_frame_menu_on, text="LOAD SAVE", font=("Helvetica", 25), anchor='nw', fg="white", bg=BACKGROUND_CLR, height=1, width=10).place(x=15, y=0)
     Label(load_frame_menu_on, text="Loading Coordinates:", font=("Helvetica", 20), anchor='nw', fg="white", bg=BACKGROUND_CLR, height=1, width=25).place(x=45, y=70)
     Label(load_frame_menu_on, text="Select a save from the drop down menu if you have one ", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=60).place(x=85, y=120)
     Label(load_frame_menu_on, text="or more coordinates saved.", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=60).place(x=85, y=150)
 
-    load_save_list = build_load_save_list()
-    list_of_saves = OptionMenu(load_frame_menu_on, CURRENT_LOADED_NAME, *load_save_list)
-    list_of_saves.place(x=355, y=250)
+    Label(load_frame_menu_on, text="DELETE SAVE", font=("Helvetica", 25), anchor='nw', fg="white", bg=BACKGROUND_CLR, height=1, width=12).place(x=15, y=330)
+    Label(load_frame_menu_on, text="Select the save you wish to delete from the drop down menu", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=60).place(x=85, y=380)
+    Label(load_frame_menu_on, text="and hit the delete button", font=("Helvetica", 15), anchor='nw', fg="#FFC983", bg=BACKGROUND_CLR, height=1, width=60).place(x=85, y=410)
+    Button(load_frame_menu_on, height=40, width=80, image=DELETE_BUTTON, bg=BACKGROUND_CLR, activebackground=BACKGROUND_CLR, relief=FLAT, command=lambda: start_delete_save_thread(str(save_to_be_deleted.get()))).place(x=690, y=465)
+
+    list_of_saves_to_load.place(x=355, y=250)
+    list_of_saves_to_delete.place(x=355, y=470)
 
     return load_frame_menu_on
 
