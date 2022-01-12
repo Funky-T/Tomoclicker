@@ -347,12 +347,12 @@ def delete_coordinate(name_to_be_deleted):
     delete_popup_root.configure(bg=BACKGROUND_CLR)
 
     #sets window size
-    delete_popup_root.geometry("640x50")
-    delete_popup_root.minsize(640, 50)
-    delete_popup_root.maxsize(640, 50)
+    delete_popup_root.geometry("300x50")
+    delete_popup_root.minsize(300, 50)
+    delete_popup_root.maxsize(300, 50)
 
-    Button(delete_popup_root, text="Delete", width=10, command=lambda: delete_coordinate_by_name(name_to_be_deleted, delete_popup_root)).place(x=437, y=10)
-    Button(delete_popup_root, text="cancel", width=10, command=delete_popup_root.destroy).place(x=537, y=10)
+    Button(delete_popup_root, text="Delete", width=10, command=lambda: delete_coordinate_by_name(name_to_be_deleted, delete_popup_root)).place(x=40, y=10)
+    Button(delete_popup_root, text="cancel", width=10, command=delete_popup_root.destroy).place(x=170, y=10)
          
     delete_popup_root.mainloop()
  
