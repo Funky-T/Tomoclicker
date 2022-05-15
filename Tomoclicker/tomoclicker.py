@@ -5,7 +5,7 @@ import time
 import threading
 from tkinter import *
 from PIL import *
-from os import name, path
+from os import path
 
 #https://www.mirametrics.com/help/mira_pro_script_8/source/getkeystate.htm 
 
@@ -242,7 +242,7 @@ def load_coordinate_by_name(save_name):
     with open(SAVE_FILE_PATH, "r") as myfile:
         for save in myfile:
             x_y_name = save.split(",")
-            if x_y_name[2] == save_name:
+            if x_y_name[2].split('\n')[0] == save_name.split('\n')[0]:
                 global CURRENT_LOADED_X, CURRENT_LOADED_Y, CURRENT_LOADED_NAME, INDEX
                 CURRENT_LOADED_X = x_y_name[0]
                 CURRENT_LOADED_Y = x_y_name[1]
@@ -322,7 +322,7 @@ def save_list_to_file():
 def delete_coordinate_by_name(name_to_be_deleted, root):
     index=0
     for save in SAVE_LIST:
-        if (save[2] + ":" == name_to_be_deleted):
+        if (save[2] == name_to_be_deleted):
             delete_coordinate_by_index(index)
             root.destroy()
             break
@@ -334,11 +334,11 @@ def delete_coordinate_by_index(index_to_be_deleted):
     save_list_to_file()
 
 def delete_coordinate(name_to_be_deleted):
-    global ACTIVE_PROCESS_ON
+    global ACTIVE_PROCESS_ON, CURRENT_FRAME_NAME
     ACTIVE_PROCESS_ON = True
 
     #clean save_name
-    name_to_be_deleted = name_to_be_deleted.split(" ")[0]
+    name_to_be_deleted = name_to_be_deleted.split(":")[0]
 
     #pop up window if valid save:
     delete_popup_root = Tk(className= "Confirm Delete")
@@ -355,7 +355,10 @@ def delete_coordinate(name_to_be_deleted):
     Button(delete_popup_root, text="cancel", width=10, command=delete_popup_root.destroy).place(x=170, y=10)
          
     delete_popup_root.mainloop()
- 
+    
+    CURRENT_FRAME_NAME = "UpdateLoadScreen"
+    draw_load()
+
     #USER PRESSED ESC OR SAVE IS DONE:
     ACTIVE_PROCESS_ON = False
     
