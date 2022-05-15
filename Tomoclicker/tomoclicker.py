@@ -200,8 +200,9 @@ def save_new_coordinate():
     #USER PRESSED ESC OR SAVE IS DONE:
     ACTIVE_PROCESS_ON = False
 
+# TODO: Check to make sure that all characters are legal characters i.e: no "\n" or ":" AND GIVE FEEDBACK when save is invalid
 def perform_save(coordinates_tuple, save_name, pop_up_window):
-    if (len(save_name) <= 30):
+    if (1 <= len(save_name) <= 30 and save_name.replace(" ", "").isalnum()):
         if (not is_save_name_in_save_list(save_name)):
             with open(SAVE_FILE_PATH, "a") as myfile:
                     myfile.write(str(coordinates_tuple[0]) + "," + str(coordinates_tuple[1]) + "," + save_name + "\n")
