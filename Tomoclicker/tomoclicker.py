@@ -4,7 +4,6 @@ import time
 
 import threading
 from tkinter import *
-from PIL import *
 from os import path
 
 #https://www.mirametrics.com/help/mira_pro_script_8/source/getkeystate.htm 
